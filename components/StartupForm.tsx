@@ -5,7 +5,6 @@ import {useState, useActionState} from "react";
 import {Input} from "@/components/ui/input";
 import {Textarea} from "@/components/ui/textarea";
 import {Button} from "@/components/ui/button";
-// import MDEditor from "@uiw/react-md-editor";
 import dynamic from "next/dynamic";
 import { Send } from 'lucide-react';
 import {useToast} from "@/hooks/use-toast";
@@ -13,21 +12,19 @@ import {useRouter} from "next/navigation";
 import {formSchema} from "@/lib/validation";
 import {z} from 'zod'
 import {createPitch} from "@/lib/actions";
-import "react-markdown-editor-lite/lib/index.css";
 
+// Thay thế MDEditor bằng react-markdown-editor-lite (nhẹ hơn và ổn định hơn)
+const MdEditor = dynamic(() => import('react-markdown-editor-lite'), {
+    ssr: false,
+    loading: () => (
+        <div className="w-full h-[300px] border border-gray-300 rounded-[20px] flex items-center justify-center bg-gray-50">
+            <p className="text-gray-500">Loading editor...</p>
+        </div>
+    )
+});
 
-// Dynamic import MDEditor để tránh lỗi SSR
-// const MDEditor = dynamic(
-//     () => import('@uiw/react-markdown-editor'),
-//     {
-//         ssr: false,
-        // loading: () => (
-        //     <div className="w-full h-[300px] border border-gray-300 rounded-[20px] flex items-center justify-center bg-gray-50">
-        //         <p className="text-gray-500">Loading editor...</p>
-        //     </div>
-        // )
-//     }
-// );
+// Import CSS cho react-markdown-editor-lite
+import 'react-markdown-editor-lite/lib/index.css';
 
 const StartupForm = () => {
     const [errors, setErrors] = useState<Record<string, string>>({});
@@ -90,6 +87,9 @@ const StartupForm = () => {
 
     const [state, formAction, isPending] = useActionState(handleFormSubmit, {error: "", status: "INITIAL"});
 
+    const handleEditorChange = ({ text }: { text: string }) => {
+        setPitch(text);
+    };
 
     return (
         <form action={formAction} className='startup-form'>
@@ -134,19 +134,14 @@ const StartupForm = () => {
                     Pitch
                 </label>
 
-                <Textarea
-                    id="pitch"
-                    value={pitch}
-                    onChange={(e) => setPitch(e.target.value)}
-                    className='startup-form_textarea'
-                    placeholder="Briefly describe your idea and what problem it solves. You can use markdown syntax for formatting."
-                    rows={10}
-                    style={{
-                        borderRadius: 20,
-                        minHeight: '300px',
-                        resize: 'vertical'
-                    }}
-                />
+                <div style={{ borderRadius: 20, overflow: "hidden" }}>
+                    <MdEditor
+                        value={pitch}
+                        style={{ height: '300px' }}
+                        onChange={handleEditorChange}
+                        placeholder="Briefly describe your idea and what problem it solves"
+                    />
+                </div>
 
                 {errors.pitch && <p className="startup-form_error" >{errors.pitch}</p>}
             </div>
