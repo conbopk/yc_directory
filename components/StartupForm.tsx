@@ -5,7 +5,7 @@ import {useState, useActionState} from "react";
 import {Input} from "@/components/ui/input";
 import {Textarea} from "@/components/ui/textarea";
 import {Button} from "@/components/ui/button";
-import MDEditor from '@uiw/react-markdown-editor';
+import dynamic from "next/dynamic";
 import { Send } from 'lucide-react';
 import {useToast} from "@/hooks/use-toast";
 import {useRouter} from "next/navigation";
@@ -13,6 +13,19 @@ import {formSchema} from "@/lib/validation";
 import {z} from 'zod'
 import {createPitch} from "@/lib/actions";
 
+
+// Dynamic import MDEditor để tránh lỗi SSR
+const MDEditor = dynamic(
+    () => import('@uiw/react-markdown-editor'),
+    {
+        ssr: false,
+        loading: () => (
+            <div className="w-full h-[300px] border border-gray-300 rounded-[20px] flex items-center justify-center bg-gray-50">
+                <p className="text-gray-500">Loading editor...</p>
+            </div>
+        )
+    }
+)
 
 const StartupForm = () => {
     const [errors, setErrors] = useState<Record<string, string>>({});
