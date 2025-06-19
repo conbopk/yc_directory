@@ -1,7 +1,7 @@
 "use client";
 
 import React from 'react';
-import {useState, useActionState} from "react";
+import {useState, useActionState, useEffect} from "react";
 import {Input} from "@/components/ui/input";
 import {Textarea} from "@/components/ui/textarea";
 import {Button} from "@/components/ui/button";
@@ -13,24 +13,44 @@ import {formSchema} from "@/lib/validation";
 import {z} from 'zod'
 import {createPitch} from "@/lib/actions";
 
-// Thay thế MDEditor bằng react-markdown-editor-lite (nhẹ hơn và ổn định hơn)
-const MdEditor = dynamic(() => import('react-markdown-editor-lite'), {
-    ssr: false,
-    loading: () => (
-        <div className="w-full h-[300px] border border-gray-300 rounded-[20px] flex items-center justify-center bg-gray-50">
-            <p className="text-gray-500">Loading editor...</p>
-        </div>
-    )
-});
-
-// Import CSS cho react-markdown-editor-lite
-import 'react-markdown-editor-lite/lib/index.css';
+// Dynamic import với timeout fallback
+const MDEditor = dynamic(
+    () => import('@uiw/react-markdown-editor').then(mod => {
+        // Ensure the module is properly loaded
+        return mod.default || mod;
+    }),
+    {
+        ssr: false,
+        loading: () => (
+            <div className="w-full h-[300px] border border-gray-300 rounded-[20px] flex items-center justify-center bg-gray-50">
+                <div className="text-center">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto mb-2"></div>
+                    <p className="text-gray-500">Loading editor...</p>
+                </div>
+            </div>
+        )
+    }
+);
 
 const StartupForm = () => {
     const [errors, setErrors] = useState<Record<string, string>>({});
     const [pitch, setPitch] = useState("");
+    const [editorLoaded, setEditorLoaded] = useState(false);
+    const [useBasicEditor, setUseBasicEditor] = useState(false);
     const { toast } = useToast();
     const router = useRouter();
+
+    // Fallback nếu editor không load trong 10 giây
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            if (!editorLoaded) {
+                setUseBasicEditor(true);
+                console.warn('MDEditor failed to load, using fallback');
+            }
+        }, 10000);
+
+        return () => clearTimeout(timer);
+    }, [editorLoaded]);
 
     const handleFormSubmit = async (prevState: any, formData: FormData)=> {
         try {
@@ -87,10 +107,6 @@ const StartupForm = () => {
 
     const [state, formAction, isPending] = useActionState(handleFormSubmit, {error: "", status: "INITIAL"});
 
-    const handleEditorChange = ({ text }: { text: string }) => {
-        setPitch(text);
-    };
-
     return (
         <form action={formAction} className='startup-form'>
             <div>
@@ -134,14 +150,49 @@ const StartupForm = () => {
                     Pitch
                 </label>
 
-                <div style={{ borderRadius: 20, overflow: "hidden" }}>
-                    <MdEditor
-                        value={pitch}
-                        style={{ height: '300px' }}
-                        onChange={handleEditorChange}
-                        placeholder="Briefly describe your idea and what problem it solves"
-                    />
-                </div>
+                {useBasicEditor ? (
+                    // Fallback basic editor
+                    <div className="relative">
+                        <Textarea
+                            id="pitch"
+                            value={pitch}
+                            onChange={(e) => setPitch(e.target.value)}
+                            className='startup-form_textarea'
+                            placeholder="Briefly describe your idea and what problem it solves. You can use markdown syntax for formatting."
+                            rows={12}
+                            style={{
+                                borderRadius: 20,
+                                minHeight: '300px',
+                                resize: 'vertical',
+                                fontFamily: 'monospace'
+                            }}
+                        />
+                        <div className="absolute top-2 right-2 text-xs text-gray-500 bg-yellow-100 px-2 py-1 rounded">
+                            Markdown Editor (Basic Mode)
+                        </div>
+                    </div>
+                ) : (
+                    // Markdown editor
+                    <div onLoad={() => setEditorLoaded(true)}>
+                        <MDEditor
+                            value={pitch}
+                            onChange={(value) => {
+                                setPitch(value as string);
+                                setEditorLoaded(true);
+                            }}
+                            id="pitch"
+                            preview='edit'
+                            height={300}
+                            style={{ borderRadius: 20, overflow: "hidden"}}
+                            textareaProps={{
+                                placeholder: "Briefly describe your idea and what problem it solves",
+                            }}
+                            previewOptions={{
+                                disallowedElements: ["style"],
+                            }}
+                        />
+                    </div>
+                )}
 
                 {errors.pitch && <p className="startup-form_error" >{errors.pitch}</p>}
             </div>
