@@ -5,6 +5,7 @@ import {useState, useActionState} from "react";
 import {Input} from "@/components/ui/input";
 import {Textarea} from "@/components/ui/textarea";
 import {Button} from "@/components/ui/button";
+// import MDEditor from "@uiw/react-md-editor";
 import dynamic from "next/dynamic";
 import { Send } from 'lucide-react';
 import {useToast} from "@/hooks/use-toast";
@@ -16,15 +17,17 @@ import "react-markdown-editor-lite/lib/index.css";
 
 
 // Dynamic import MDEditor để tránh lỗi SSR
-// Thay thế MDEditor bằng react-markdown-editor-lite (nhẹ hơn và ổn định hơn)
-const MdEditor = dynamic(() => import('react-markdown-editor-lite'), {
-    ssr: false,
-    loading: () => (
-        <div className="w-full h-[300px] border border-gray-300 rounded-[20px] flex items-center justify-center bg-gray-50">
-            <p className="text-gray-500">Loading editor...</p>
-        </div>
-    )
-});
+const MDEditor = dynamic(
+    () => import('@uiw/react-markdown-editor'),
+    {
+        ssr: true,
+        // loading: () => (
+        //     <div className="w-full h-[300px] border border-gray-300 rounded-[20px] flex items-center justify-center bg-gray-50">
+        //         <p className="text-gray-500">Loading editor...</p>
+        //     </div>
+        // )
+    }
+);
 
 const StartupForm = () => {
     const [errors, setErrors] = useState<Record<string, string>>({});
@@ -87,9 +90,6 @@ const StartupForm = () => {
 
     const [state, formAction, isPending] = useActionState(handleFormSubmit, {error: "", status: "INITIAL"});
 
-    const handleEditorChange = ({ text }: { text: string }) => {
-        setPitch(text);
-    };
 
     return (
         <form action={formAction} className='startup-form'>
@@ -134,14 +134,21 @@ const StartupForm = () => {
                     Pitch
                 </label>
 
-                <div style={{ borderRadius: 20, overflow: "hidden" }}>
-                    <MdEditor
-                        value={pitch}
-                        style={{ height: '300px' }}
-                        onChange={handleEditorChange}
-                        placeholder="Briefly describe your idea and what problem it solves"
-                    />
-                </div>
+                <MDEditor
+                    value={pitch}
+                    onChange={(value) => setPitch(value as string)}
+                    id="pitch"
+                    preview="edit"
+                    height={300}
+                    style={{ borderRadius: 20, overflow: "hidden" }}
+                    textareaProps={{
+                        placeholder:
+                            "Briefly describe your idea and what problem it solves",
+                    }}
+                    previewOptions={{
+                        disallowedElements: ["style"],
+                    }}
+                />
 
                 {errors.pitch && <p className="startup-form_error" >{errors.pitch}</p>}
             </div>
