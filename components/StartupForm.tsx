@@ -17,17 +17,17 @@ import "react-markdown-editor-lite/lib/index.css";
 
 
 // Dynamic import MDEditor để tránh lỗi SSR
-const MDEditor = dynamic(
-    () => import('@uiw/react-markdown-editor'),
-    {
-        ssr: false,
+// const MDEditor = dynamic(
+//     () => import('@uiw/react-markdown-editor'),
+//     {
+//         ssr: false,
         // loading: () => (
         //     <div className="w-full h-[300px] border border-gray-300 rounded-[20px] flex items-center justify-center bg-gray-50">
         //         <p className="text-gray-500">Loading editor...</p>
         //     </div>
         // )
-    }
-);
+//     }
+// );
 
 const StartupForm = () => {
     const [errors, setErrors] = useState<Record<string, string>>({});
@@ -134,19 +134,17 @@ const StartupForm = () => {
                     Pitch
                 </label>
 
-                <MDEditor
-                    value={pitch}
-                    onChange={(value) => setPitch(value as string)}
+                <Textarea
                     id="pitch"
-                    preview="edit"
-                    height={300}
-                    style={{ borderRadius: 20, overflow: "hidden" }}
-                    textareaProps={{
-                        placeholder:
-                            "Briefly describe your idea and what problem it solves",
-                    }}
-                    previewOptions={{
-                        disallowedElements: ["style"],
+                    value={pitch}
+                    onChange={(e) => setPitch(e.target.value)}
+                    className='startup-form_textarea'
+                    placeholder="Briefly describe your idea and what problem it solves. You can use markdown syntax for formatting."
+                    rows={10}
+                    style={{
+                        borderRadius: 20,
+                        minHeight: '300px',
+                        resize: 'vertical'
                     }}
                 />
 
