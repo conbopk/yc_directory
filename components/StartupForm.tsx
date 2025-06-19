@@ -1,7 +1,7 @@
 "use client";
 
 import React from 'react';
-import {useState, useActionState, useEffect} from "react";
+import {useState, useActionState} from "react";
 import {Input} from "@/components/ui/input";
 import {Textarea} from "@/components/ui/textarea";
 import {Button} from "@/components/ui/button";
@@ -13,12 +13,9 @@ import {formSchema} from "@/lib/validation";
 import {z} from 'zod'
 import {createPitch} from "@/lib/actions";
 
-// Dynamic import với timeout fallback
+// Sử dụng @uiw/react-md-editor thay vì react-markdown-editor
 const MDEditor = dynamic(
-    () => import('@uiw/react-md-editor').then(mod => {
-        // Ensure the module is properly loaded
-        return mod.default || mod;
-    }),
+    () => import('@uiw/react-md-editor').then((mod) => mod.default),
     {
         ssr: false,
         loading: () => (
@@ -35,22 +32,8 @@ const MDEditor = dynamic(
 const StartupForm = () => {
     const [errors, setErrors] = useState<Record<string, string>>({});
     const [pitch, setPitch] = useState("");
-    const [editorLoaded, setEditorLoaded] = useState(false);
-    const [useBasicEditor, setUseBasicEditor] = useState(false);
     const { toast } = useToast();
     const router = useRouter();
-
-    // Fallback nếu editor không load trong 10 giây
-    useEffect(() => {
-        const timer = setTimeout(() => {
-            if (!editorLoaded) {
-                setUseBasicEditor(true);
-                console.warn('MDEditor failed to load, using fallback');
-            }
-        }, 10000);
-
-        return () => clearTimeout(timer);
-    }, [editorLoaded]);
 
     const handleFormSubmit = async (prevState: any, formData: FormData)=> {
         try {
@@ -150,49 +133,18 @@ const StartupForm = () => {
                     Pitch
                 </label>
 
-                {useBasicEditor ? (
-                    // Fallback basic editor
-                    <div className="relative">
-                        <Textarea
-                            id="pitch"
-                            value={pitch}
-                            onChange={(e) => setPitch(e.target.value)}
-                            className='startup-form_textarea'
-                            placeholder="Briefly describe your idea and what problem it solves. You can use markdown syntax for formatting."
-                            rows={12}
-                            style={{
-                                borderRadius: 20,
-                                minHeight: '300px',
-                                resize: 'vertical',
-                                fontFamily: 'monospace'
-                            }}
-                        />
-                        <div className="absolute top-2 right-2 text-xs text-gray-500 bg-yellow-100 px-2 py-1 rounded">
-                            Markdown Editor (Basic Mode)
-                        </div>
-                    </div>
-                ) : (
-                    // Markdown editor
-                    <div onLoad={() => setEditorLoaded(true)}>
-                        <MDEditor
-                            value={pitch}
-                            onChange={(value) => {
-                                setPitch(value as string);
-                                setEditorLoaded(true);
-                            }}
-                            id="pitch"
-                            preview='edit'
-                            height={300}
-                            style={{ borderRadius: 20, overflow: "hidden"}}
-                            textareaProps={{
-                                placeholder: "Briefly describe your idea and what problem it solves",
-                            }}
-                            previewOptions={{
-                                disallowedElements: ["style"],
-                            }}
-                        />
-                    </div>
-                )}
+                <div style={{ borderRadius: 20, overflow: "hidden" }}>
+                    <MDEditor
+                        value={pitch}
+                        onChange={(val) => setPitch(val || "")}
+                        preview="edit"
+                        height={300}
+                        data-color-mode="light"
+                        textareaProps={{
+                            placeholder: "Briefly describe your idea and what problem it solves",
+                        }}
+                    />
+                </div>
 
                 {errors.pitch && <p className="startup-form_error" >{errors.pitch}</p>}
             </div>
