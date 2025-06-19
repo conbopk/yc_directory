@@ -20,7 +20,7 @@ import "react-markdown-editor-lite/lib/index.css";
 const MDEditor = dynamic(
     () => import('@uiw/react-markdown-editor'),
     {
-        ssr: true,
+        ssr: false,
         // loading: () => (
         //     <div className="w-full h-[300px] border border-gray-300 rounded-[20px] flex items-center justify-center bg-gray-50">
         //         <p className="text-gray-500">Loading editor...</p>
