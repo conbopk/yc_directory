@@ -31,8 +31,11 @@ const StartupForm = () => {
             };
 
             await formSchema.parseAsync(formValues);
+            console.log("Validation successful");
+
 
             const result = await createPitch(prevState, formData, pitch);
+            console.log("Server action result:", result);
 
             if (result.status == "SUCCESS") {
                 toast({
@@ -40,6 +43,7 @@ const StartupForm = () => {
                     description: "Your startup pitch has been created successfully",
                 });
 
+                console.log("Redirecting to:", `/startup/${result._id}`);
                 router.push(`/startup/${result._id}`);
             }
 
