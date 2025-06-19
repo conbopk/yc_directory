@@ -15,7 +15,7 @@ import {createPitch} from "@/lib/actions";
 
 // Dynamic import với timeout fallback
 const MDEditor = dynamic(
-    () => import('@uiw/react-markdown-editor').then(mod => {
+    () => import('@uiw/react-md-editor').then(mod => {
         // Ensure the module is properly loaded
         return mod.default || mod;
     }),
